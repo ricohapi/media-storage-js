@@ -1,0 +1,24 @@
+{
+  "name": "ricohapi-mstorage",
+  "version": "1.0.0",
+  "description": "RICOH API media storage",
+  "main": "index.js",
+  "dependencies": {
+    "request-promise": "2.0.1",
+    "ricohapi-auth": "1.0.1"
+  },
+  "engines": {
+    "node": ">=5.0.0",
+    "npm": ">=3.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ricohapi/media-storage-js.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/ricohapi/media-storage-js/issues"
+  },
+  "homepage": "https://github.com/ricohapi/media-storage-js"
+}
