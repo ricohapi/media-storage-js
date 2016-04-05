@@ -1,9 +1,17 @@
+// application setting
 const CONFIG = {
   clientId: '',
   clientSecret: '',
-  userId: '',
-  userPass: '',
-  params: {}, // if needed
+  params: {},
 };
 
-module.exports.CONFIG = CONFIG;
+// user information
+const USER = {
+  userId: '',
+  userPass: '',
+};
+
+if (typeof window === 'undefined') {
+  module.exports.CONFIG = CONFIG;
+  module.exports.USER = USER;
+}

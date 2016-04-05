@@ -5,114 +5,136 @@
  */
 
 const AuthClient = require('ricohapi-auth').AuthClient;
-const rp = require('request-promise');
+const axios = require('axios');
 const fs = require('fs');
-const httpsProxyAgent = require('https-proxy-agent');
-
-const MSTORAGE_ENDPOINT = 'https://mss.ricohapi.com/v1/media';
 
 class MStorage {
 
-  _defaultOpt() {
-    return this._client.getAccessToken()
-      .then(token => Promise.resolve({
-        method: 'GET',
-        uri: MSTORAGE_ENDPOINT,
-        headers: {
-          'Authorization': 'Bearer ' + token,
-        }
-      }));
+  _req(opt) {
+    return new Promise((resolve, reject) => {
+      this._client.getAccessToken()
+        .then(token => {
+          const ropt = opt;
+          if (opt.headers) {
+            ropt.headers.Authorization = `Bearer ${token}`;
+          } else {
+            ropt.headers = { Authorization: `Bearer ${token}` };
+          }
+          return this._r.request(ropt);
+        })
+        .then(ret => resolve(ret.data))
+        .catch(reject);
+    });
   }
 
   constructor(client, params) {
     this._client = client;
 
-    let defaults = {};
-    if (params && params.proxy) {
-      defaults = { agent: httpsProxyAgent(params.proxy) };
+    const defaults = {
+      baseURL: 'https://mss.ricohapi.com:443/v1',
+    };
+    if (params && params.agent) {
+      defaults.agent = params.agent;
     }
-    this._r = rp.defaults(defaults);
+    this._r = axios.create(defaults);
   }
 
   connect() {
     if (this._client === undefined) throw new Error('state error: no client');
 
     return this._client.session(AuthClient.SCOPES.MStorage)
-      .then(() => this._token = this._client.accessToken);
+      .then(result => {
+        this._token = result.accessToken;
+        return Promise.resolve();
+      });
   }
 
   list(param) {
-    return this._defaultOpt()
-      .then(opt => {
-        if (param) {
-          if (param.after) {
-            opt.uri = `${opt.uri}?after=${param.after}`;
-            if (param.limit) {
-              opt.uri = `${opt.uri}&limit=${param.limit}`;
-            }
-          } else if (param.limit) {
-            opt.uri = `${opt.uri}?limit=${param.limit}`;
-          }
-        }
-        return this._r(opt);
+    if (!param) {
+      return this._req({
+        method: 'get',
+        url: '/media',
+      });
+    }
+    const arr = [];
+    if (param.after) {
+      arr.push(`after=${param.after}`);
+    }
+    if (param.limit) {
+      arr.push(`limit=${param.limit}`);
+    }
+    return this._req({
+      method: 'get',
+      url: `/media?${arr.join('&')}`,
+    });
+  }
+
+  download(id, type) {
+    if (id === undefined) throw new Error('parameter error');
+    const rtype = type || 'stream';
+
+    const opt = {
+      method: 'get',
+      url: `/media/${id}/content`,
+      responseType: rtype,
+    };
+    return this._req(opt);
+  }
+
+  downloadTo(id, path) {
+    if (path === undefined) throw new Error('parameter error');
+
+    const opt = {
+      method: 'get',
+      url: `/media/${id}/content`,
+      responseType: 'arraybuffer',
+    };
+    return this._req(opt)
+      .then(ret => {
+        fs.writeFile(path, new Buffer(ret));
       });
   }
 
   upload(path) {
     if (path === undefined) throw new Error('parameter error');
 
-    return this._defaultOpt()
-      .then(opt => {
-        opt.method = 'POST';
-        opt.headers['Content-Type'] = 'image/jpeg';
-        opt.body = fs.readFileSync(path);
-        return this._r(opt);
-      });
-  }
-
-  downloadTo(id, path) {
-    if (id === undefined) throw new Error('parameter error');
-    if (path === undefined) throw new Error('parameter error');
-
-    return this._defaultOpt()
-      .then(opt => {
-        opt.uri = `${MSTORAGE_ENDPOINT}/${id}/content`;
-        opt.encoding = null;
-        opt.resolveWithFullResponse = true;
-        return this._r(opt);
-      })
-      .then(ret => fs.writeFile(path, new Buffer(ret.body)));
+    const opt = {
+      method: 'post',
+      url: '/media',
+      headers: { 'Content-Type': 'image/jpeg' },
+      data: fs.readFileSync(path),
+    };
+    return this._req(opt);
   }
 
   info(id) {
     if (id === undefined) throw new Error('parameter error');
 
-    return this._defaultOpt()
-      .then(opt => {
-        opt.uri = `${MSTORAGE_ENDPOINT}/${id}`;
-        return this._r(opt);
-      });
+    const opt = {
+      method: 'get',
+      url: `/media/${id}`,
+    };
+    return this._req(opt);
   }
 
   meta(id) {
     if (id === undefined) throw new Error('parameter error');
 
-    return this._defaultOpt()
-      .then(opt => {
-        opt.uri = `${MSTORAGE_ENDPOINT}/${id}/meta`;
-        return this._r(opt);
-      });
+    const opt = {
+      method: 'get',
+      url: `/media/${id}/meta`,
+    };
+    return this._req(opt);
   }
 
   delete(id) {
     if (id === undefined) throw new Error('parameter error');
 
-    return this._defaultOpt()
-      .then(opt => {
-        opt.method = 'DELETE';
-        opt.uri = `${MSTORAGE_ENDPOINT}/${id}`;
-        return this._r(opt);
-      });
+    const opt = {
+      method: 'delete',
+      url: `/media/${id}`,
+    };
+    return this._req(opt);
   }
 }
 
