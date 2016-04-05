@@ -7,6 +7,7 @@
 const AuthClient = require('ricohapi-auth').AuthClient;
 const rp = require('request-promise');
 const fs = require('fs');
+const httpsProxyAgent = require('https-proxy-agent');
 
 const MSTORAGE_ENDPOINT = 'https://mss.ricohapi.com/v1/media';
 
@@ -23,9 +24,15 @@ class MStorage {
     };
   }
 
-  constructor(arg) {
+  constructor(arg, params) {
     if (typeof arg === 'string') this._token = arg;
     else this._client = arg;
+
+    let defaults = {};
+    if (params && params.proxy) {
+      defaults = { agent: httpsProxyAgent(params.proxy) };
+    }
+    this._r = rp.defaults(defaults);
   }
 
   connect() {
@@ -52,7 +59,7 @@ class MStorage {
         opt.uri = `${opt.uri}?limit=${param.limit}`;
       }
     }
-    return rp(opt);
+    return this._r(opt);
   }
 
   upload(path) {
@@ -62,7 +69,7 @@ class MStorage {
     opt.method = 'POST';
     opt.headers['Content-Type'] = 'image/jpeg';
     opt.body = fs.readFileSync(path);
-    return rp(opt);
+    return this._r(opt);
   }
 
   downloadTo(id, path) {
@@ -74,7 +81,7 @@ class MStorage {
     opt.resolveWithFullResponse = true;
 
     return new Promise((resolve, reject) => {
-      rp(opt)
+      this._r(opt)
         .then(ret => {
           fs.writeFile(path, new Buffer(ret.body));
           resolve();
@@ -88,7 +95,7 @@ class MStorage {
 
     let opt = this._defaultOpt();
     opt.uri = `${MSTORAGE_ENDPOINT}/${id}`;
-    return rp(opt);
+    return this._r(opt);
   }
 
   meta(id) {
@@ -96,7 +103,7 @@ class MStorage {
 
     let opt = this._defaultOpt();
     opt.uri = `${MSTORAGE_ENDPOINT}/${id}/meta`;
-    return rp(opt);
+    return this._r(opt);
   }
 
   delete(id) {
@@ -105,7 +112,7 @@ class MStorage {
     let opt = this._defaultOpt();
     opt.method = 'DELETE';
     opt.uri = `${MSTORAGE_ENDPOINT}/${id}`;
-    return rp(opt);
+    return this._r(opt);
   }
 }
 
