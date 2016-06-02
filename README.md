@@ -51,28 +51,28 @@ const mstorage = new MStorage(<AuthClient object>);
 ### Connect to the server
 
 ```JavaScript
-mstorage.connect()
+mstorage.connect();
 ```
 A Promise is returned.
 
 ### Upload a file
 
 ```JavaScript
-mstorage.upload('./upload_file_path.jpg')
+mstorage.upload('./upload_file_path.jpg');
 ```
 A Promise is returned.
 
 ### Download a file
 
 ```JavaScript
-mstorage.downloadTo('<media_id>', './download_file_path.jpg')
+mstorage.downloadTo('<media_id>', './download_file_path.jpg');
 ```
 A Promise is returned.
 
 ### Download a file as blob
 
 ```JavaScript
-mstorage.download('<media_id>', 'blob')
+mstorage.download('<media_id>', 'blob');
 ```
 A Promise is returned.
 
@@ -89,7 +89,7 @@ mstorage.list({limit: 25, after: '<cursor-id>'})
 ### Delete a file
 
 ```JavaScript
-mstorage.delete('<media_id>')
+mstorage.delete('<media_id>');
 ```
 A Promise is returned.
 
@@ -97,13 +97,64 @@ A Promise is returned.
 
 ```JavaScript
 mstorage.info('<media_id>')
-.then(info => console.log(info))
+.then(info => console.log(info));
 ```
 
-### Get metadata of a file
+### Get all metadata of a file
 
 ```JavaScript
 mstorage.meta('<media_id>')
-.then(meta => console.log(meta))
+.then(meta => console.log(meta));
 ```
 
+### Get specific metadata of a file
+
+```JavaScript
+mstorage.meta('<media_id>', 'user')
+.then(meta => console.log(meta));
+
+mstorage.meta('<media_id>', 'user.<key1>')
+.then(meta => console.log(meta));
+
+mstorage.meta('<media_id>', 'exif')
+.then(meta => console.log(meta));
+
+mstorage.meta('<media_id>', 'gpano')
+.then(meta => console.log(meta));
+```
+
+### Add user metadata to a file
+
+Existing metadata value for the same key will be overwritten.
+Up to 10 user metadata can be attached to a media data.
+
+```JavaScript
+mstorage.addMeta('<media_id>', { 'user.<key1>' : '<value1>', 'user.<key2>' : '<value2>', ...});
+```
+
+A Promise is returned.
+
+### Remove user metadata from a file
+
+```JavaScript
+mstorage.removeMeta('<media_id>', 'user.<key>');
+```
+
+A Promise is returned.
+
+### Remove all user metadata from a file
+
+```JavaScript
+mstorage.removeMeta('<media_id>', 'user');
+```
+
+A Promise is returned.
+
+### Search media ids by user metadata
+
+return media ids which have all key value pairs
+
+```JavaScript
+mstorage.list({filter: { 'meta.user.<key1>' : '<value1>', 'meta.user.<key2>' : '<value2>', ...}})
+.then(list => console.log(list));
+```

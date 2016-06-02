@@ -9,7 +9,7 @@ module.exports = {
     loaders: [{
       test: /\.js$/,
       loader: 'babel',
-      exclude: /node_modules/,
+      exclude: /^(?!.*ricoh).*(?=node_modules).*$/,
       query: {
         presets: ['es2015'],
         compact: false,
