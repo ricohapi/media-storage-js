@@ -129,6 +129,54 @@ describe('MStorage', () => {
         });
     });
 
+    it('success user', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      return m.connect()
+        .then(() => m.meta('id1', 'user'))
+        .then(ret => {
+          expect(RQStub.firstCall.args[0].method).to.have.string('get');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media/id1/meta/user');
+          expect(ret.abc).to.have.string('def');
+        });
+    });
+
+    it('success user.key', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      return m.connect()
+        .then(() => m.meta('id1', 'user.key1'))
+        .then(ret => {
+          expect(RQStub.firstCall.args[0].method).to.have.string('get');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media/id1/meta/user/key1');
+          expect(ret.abc).to.have.string('def');
+        });
+    });
+
+    it('success exif', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      return m.connect()
+        .then(() => m.meta('id1', 'exif'))
+        .then(ret => {
+          expect(RQStub.firstCall.args[0].method).to.have.string('get');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media/id1/meta/exif');
+          expect(ret.abc).to.have.string('def');
+        });
+    });
+
+    it('success gpano', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      return m.connect()
+        .then(() => m.meta('id1', 'gpano'))
+        .then(ret => {
+          expect(RQStub.firstCall.args[0].method).to.have.string('get');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media/id1/meta/gpano');
+          expect(ret.abc).to.have.string('def');
+        });
+    });
+
     it('parameter error', done => {
       const a = new AuthClientStub();
       const m = new MStorage(a);
@@ -136,6 +184,21 @@ describe('MStorage', () => {
         .then(() => {
           try {
             m.meta();
+          } catch (e) {
+            expect(e.toString()).to.have.string('parameter error');
+            done();
+          }
+        });
+    });
+
+
+    it('parameter error(not user)', done => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      m.connect()
+        .then(() => {
+          try {
+            m.meta('id1', 'tame');
           } catch (e) {
             expect(e.toString()).to.have.string('parameter error');
             done();
@@ -173,6 +236,111 @@ describe('MStorage', () => {
     });
   });
 
+  describe('addMeta()', () => {
+    it('success', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      return m.connect()
+        .then(() => m.addMeta('idx', { 'user.key1': 'value' }))
+    });
+
+    it('parameter error(key)', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      m.connect()
+        .then(() => {
+          try {
+            m.addMeta('id1', { 'key1': 'val1' });
+          } catch (e) {
+            expect(e.toString()).to.have.string('parameter error');
+            done();
+          }
+        });
+    });
+
+    it('parameter error', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      m.connect()
+        .then(() => {
+          try {
+            m.addMeta('id2');
+          } catch (e) {
+            done();
+          }
+        });
+    });
+
+  });
+
+  describe('removeMeta()', () => {
+    it('success', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      return m.connect()
+        .then(() => m.removeMeta('idx', 'user'))
+        .then(ret => {
+          expect(RQStub.firstCall.args[0].method).to.have.string('delete');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media/idx/meta/user');
+          expect(ret.abc).to.have.string('def');
+        });
+    });
+
+
+    it('success with key', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      return m.connect()
+        .then(() => m.removeMeta('idx', 'user.key'))
+        .then(ret => {
+          expect(RQStub.firstCall.args[0].method).to.have.string('delete');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media/idx/meta/user/key');
+          expect(ret.abc).to.have.string('def');
+        });
+    });
+
+    it('parameter error', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      m.connect()
+        .then(() => {
+          try {
+            m.removeMeta();
+          } catch (e) {
+            expect(e.toString()).to.have.string('parameter error');
+            done();
+          }
+        });
+    });
+
+    it('parameter error(range)', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      m.connect()
+        .then(() => {
+          try {
+            m.removeMeta('idxx');
+          } catch (e) {
+            expect(e.toString()).to.have.string('parameter error');
+            done();
+          }
+        });
+    });
+
+    it('unsupported', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      m.connect()
+        .then(() => {
+          try {
+            m.removeMeta('id11', 'exif');
+          } catch (e) {
+            expect(e.toString()).to.have.string('unsupported now');
+            done();
+          }
+        });
+    });
+  });
 
   describe('list()', () => {
     it('success', () => {
@@ -220,6 +388,23 @@ describe('MStorage', () => {
         .then(ret => {
           expect(RQStub.firstCall.args[0].method).to.have.string('get');
           expect(RQStub.firstCall.args[0].url).to.have.string('/media?after=123&limit=321');
+          expect(ret.abc).to.have.string('def');
+        });
+    });
+
+    it('success with filter', () => {
+      const a = new AuthClientStub();
+      const m = new MStorage(a);
+      return m.connect()
+        .then(() => m.list({ filter: { '123': 'value' } }))
+        .then(ret => {
+          expect(RQStub.firstCall.args[0].method).to.have.string('post');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media/search');
+          expect(RQStub.firstCall.args[0].data).to.have.string(JSON.stringify({
+            search_version: "2016-06-01",
+            query: { '123': 'value' }
+          }));
+
           expect(ret.abc).to.have.string('def');
         });
     });
@@ -323,8 +508,9 @@ describe('MStorage', () => {
             done();
           }
         });
-
     });
   });
+
+
 
 });
