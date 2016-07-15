@@ -362,7 +362,8 @@ describe('MStorage', () => {
         .then(() => m.list({ after: '123' }))
         .then(ret => {
           expect(RQStub.firstCall.args[0].method).to.have.string('get');
-          expect(RQStub.firstCall.args[0].url).to.have.string('/media?after=123');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media');
+          expect(RQStub.firstCall.args[0].params.after).to.have.string('123');
           expect(ret.abc).to.have.string('def');
         });
     });
@@ -374,7 +375,8 @@ describe('MStorage', () => {
         .then(() => m.list({ limit: '321' }))
         .then(ret => {
           expect(RQStub.firstCall.args[0].method).to.have.string('get');
-          expect(RQStub.firstCall.args[0].url).to.have.string('/media?limit=321');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media');
+          expect(RQStub.firstCall.args[0].params.limit).to.have.string('321');
           expect(ret.abc).to.have.string('def');
         });
 
@@ -387,7 +389,9 @@ describe('MStorage', () => {
         .then(() => m.list({ after: '123', limit: '321' }))
         .then(ret => {
           expect(RQStub.firstCall.args[0].method).to.have.string('get');
-          expect(RQStub.firstCall.args[0].url).to.have.string('/media?after=123&limit=321');
+          expect(RQStub.firstCall.args[0].url).to.have.string('/media');
+          expect(RQStub.firstCall.args[0].params.after).to.have.string('123');
+          expect(RQStub.firstCall.args[0].params.limit).to.have.string('321');
           expect(ret.abc).to.have.string('def');
         });
     });
@@ -396,15 +400,12 @@ describe('MStorage', () => {
       const a = new AuthClientStub();
       const m = new MStorage(a);
       return m.connect()
-        .then(() => m.list({ filter: { '123': 'value' } }))
+        .then(() => m.list({ filter: { 'k123': 'value' } }))
         .then(ret => {
           expect(RQStub.firstCall.args[0].method).to.have.string('post');
           expect(RQStub.firstCall.args[0].url).to.have.string('/media/search');
-          expect(RQStub.firstCall.args[0].data).to.have.string(JSON.stringify({
-            search_version: "2016-06-01",
-            query: { '123': 'value' }
-          }));
-
+          expect(RQStub.firstCall.args[0].data.search_version).to.have.string("2016-07-08");
+          expect(RQStub.firstCall.args[0].data.query.k123).to.have.string("value");
           expect(ret.abc).to.have.string('def');
         });
     });

@@ -28,7 +28,7 @@ class MStorage {
   }
 
   constructor(client, params) {
-    this._RE_USERMETA = /^user\.([A-Za-z0-9_\-]{1,32})$/;
+    this._RE_USERMETA = /^user\.([A-Za-z0-9_\-]{1,256})$/;
     this._client = client;
 
     const defaults = {
@@ -50,30 +50,29 @@ class MStorage {
       });
   }
 
-  list(param) {
-    if (!param) {
-      return this._req({
-        method: 'get',
-        url: '/media',
-      });
-    }
-    if (param.filter) {
-      return this._req({
-        method: 'post',
-        url: '/media/search',
-        headers: { 'Content-Type': 'text/plain' },
-        data: JSON.stringify({
-          search_version: '2016-06-01',
-          query: param.filter,
-        }),
-      });
-    }
-    const arr = [];
-    if (param.after) arr.push(`after=${param.after}`);
-    if (param.limit) arr.push(`limit=${param.limit}`);
+  _search(params) {
+    const data = {};
+    data.search_version = '2016-07-08';
+    data.query = params.filter;
+    const paging = {};
+    if (params.after) paging.after = params.after;
+    if (params.before) paging.before = params.before;
+    if (params.limit) paging.limit = params.limit;
+    if (Object.keys(paging).length !== 0) data.paging = paging;
+    return this._req({
+      method: 'post',
+      url: '/media/search',
+      data,
+    });
+  }
+
+  list(params) {
+    if (!params) return this._req({ method: 'get', url: '/media' });
+    if (params.filter) return this._search(params);
     return this._req({
       method: 'get',
-      url: `/media?${arr.join('&')}`,
+      url: '/media',
+      params,
     });
   }
 
